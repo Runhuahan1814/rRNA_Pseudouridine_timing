@@ -7,7 +7,7 @@ multi_to_single_fast5 \
     --threads \      # number of CPU threads to use  
 ```
 
-## basecalling using Guppy (https://timkahlke.github.io/LongRead_tutorials/BS_G.html)
+## Basecalling using Guppy (https://timkahlke.github.io/LongRead_tutorials/BS_G.html)
 We used Version 6.5.7 for basecalling of all of our reads:
 ``` bash
 guppy_basecaller \
@@ -21,7 +21,7 @@ guppy_basecaller \
 --recursive \
 ```
 
-## mapping to 35S rRNA reference sequence using minimap2 (https://github.com/lh3/minimap2)
+## Mapping to the 35S rRNA reference sequence using minimap2 (https://github.com/lh3/minimap2)
 We used Version minimap2 (v2.28) with parameters -ax splice -uf -k14 
 ``` bash
 minimap2 -ax splice -uf -k14 ref.fa direct-rna.fq > aln.sam  # Nanopore Direct RNA-seq
@@ -39,52 +39,26 @@ samtools index aligned.sorted.bam
 NanoPlot --summary sequencing_summary.txt --loglength -o summary-plots-log-transformed
 ```
 
-## Convert R script output files of read names to usable versions to cluster actual reads
+## Processing of classified reads from R script output
+1. Convert R script output files of read names to usable versions to cluster actual reads
 ``` bash
-tail -c +2 input.txt | tr -d '()"' | tr -d '\n ' | tr -d '\r' | tr ',' '\n' > output.txt
+tail -c +2 input.txt | tr -d '()"' | tr -d '\n ' | tr -d '\r' | tr ',' '\n' > output_list.txt
 ```
-
-d. Sort and index resulting clustered .bam files
-	samtools view -bN minion_pre2_35S_list.txt minion_pre2.sorted.bam > minion_pre2_35S.sorted.bam; 
-samtools view -bN minion_pre2_33S_list.txt minion_pre2.sorted.bam > minion_pre2_33S.sorted.bam; 
-samtools view -bN minion_pre2_32S_list.txt minion_pre2.sorted.bam > minion_pre2_32S.sorted.bam; 
-samtools view -bN minion_pre2_32_33S_list.txt minion_pre2.sorted.bam > minion_pre2_32_33S.sorted.bam
-
-
-    samtools index MiNION_pre2_35S.sorted.bam;    
-    samtools index MiNION_pre2_33S.sorted.bam;
-    samtools index MiNION_pre2_32S.sorted.bam;
-    samtools index MiNION_pre2_32_33S.sorted.bam
-
-	
-
-7. Coverage analysis (if desired, can be done pre- and post-clustering)
-	samtools depth -a \
+2. Sort and index resulting clustered .bam files
+``` bash
+samtools view -bN output_list.txt input.sorted.bam > classified.sorted.bam
+samtools index classified.sorted.bam
+```
+3. Coverage analysis (if desired, can be done pre- and post-clustering)
+``` bash
+samtools depth -a \
 	    -J {name of sorted.bam file} \
 		-o {name of output file .tsv}
-
-samtools depth -a \
-	    -J MiNION_pre2_35S.sorted.bam \
-		-o MiNION_pre2_35S.sorted.tsv;
-samtools depth -a \
-	    -J MiNION_pre2_33S.sorted.bam \
-		-o MiNION_pre2_33S.sorted.tsv;
-samtools depth -a \
-	    -J MiNION_pre2_32S.sorted.bam \
-		-o MiNION_pre2_32S.sorted.tsv;
-samtools depth -a \
-	    -J MiNION_pre2_32_33S.sorted.bam \
-		-o MiNION_pre2_32_33S.sorted.tsv
-
-
-
-8. Use clustering results to separate read fast5 read files into folders for tombo analysis
-	for i in $(cat M_primary_list.txt); do find /home/emily/projects/nano/tombo_test/Flongle_mature_20230617/single_fast5_pass/ -type f -name "$i".fast5 -exec cp {} ./M_primary_fast5 \; ; done
-	for i in $(cat M_early_list.txt); do find /home/emily/projects/nano/tombo_test/Flongle_mature_20230617/single_fast5_pass/ -type f -name "$i".fast5 -exec cp {} ./M_early_fast5 \; ; done
-	for i in $(cat M_intermediate_list.txt); do find /home/emily/projects/nano/tombo_test/Flongle_mature_20230617/single_fast5_pass/ -type f -name "$i".fast5 -exec cp {} ./M_intermediate_fast5 \; ; done
-	for i in $(cat M_mature_list.txt); do find /home/emily/projects/nano/tombo_test/Flongle_mature_20230617/single_fast5_pass/ -type f -name "$i".fast5 -exec cp {} ./M_mature_fast5 \; ; done
-<img width="468" height="643" alt="image" src="https://github.com/user-attachments/assets/dc7b1445-f461-43df-9e3d-9fb14e9f6496" />
-
+```
+4. Use clustering results to separate read fast5 read files into folders for RNA modification analysis
+``` bash
+for i in $(output_list.txt); do find /input_directory_fast5_files -type f -name "$i".fast5 -exec cp {} ./output_directory_fast5_files \; ; done
+```	
 
 ## Analysis of pseudouridines using NanoPsu
 Details of the analysis pipeline and model implementation are available on the Nanopore_psU GitHub repository: https://github.com/sihaohuanguc/Nanopore_psU (Huang et al.).
