@@ -31,12 +31,13 @@ pre_rRNA <- read_in_bam("./input_directory/input.sorted.bam")
 pre_rRNA_good <- pre_rRNA %>%
   dplyr::filter(identity >= 80) 
 
+# Extract read name
 dput(pre_rRNA_good$minion_read_name, "pre_rRNA_good.txt")
 
 # Classify the reads in the bam file with the processing stage, then group into processing stages
-# The first 5 mutate commands add a column for a processing stage (i.e. 20S, 27SA2)
+# The first several mutate commands add a column for a processing stage (i.e. 20S, 27SA2)
 # The if_else command places a 1 (yes) if the read has the desired qualities, and a 0 (no) if it does not
-# For example, 20S is a yes if the read starts at position 700 or more and ends between 2501 and 2712
+# For example, 20S is a yes if the read starts at position 701 or more and ends between 2501 and 2712
 # These qualities can be adjusted or enhanced to fine tune the clustering
 # The final mutate command adds a new column called group, and assigns the group based on the values of the processing states
 pre_rRNA_good_sort <- pre_rRNA_good  %>%
@@ -87,7 +88,7 @@ dput(pre_rRNA_good_intermediate$minion_read_name, "pre_rRNA_good_intermediate.tx
 dput(pre_rRNA_good_late$minion_read_name, "pre_rRNA_good_late.txt")
 dput(pre_rRNA_good_mature$minion_read_name, "pre_rRNA_good_mature.txt")
 
-#classification of the rRNA reads into every single one
+#classification of the rRNA reads into every single intermediate in the rRNA maturation pathway
 pre_rRNA_good_sort_each <- pre_rRNA_good %>%
   dplyr::mutate(twentyS = if_else(start >= 701 && between(end, 2501, 2712), 1, 0)) %>%
   dplyr::mutate(twentysevenSAtwo = if_else(between(start, 2713, 2784) && end <= 6661, 1, 0)) %>%
